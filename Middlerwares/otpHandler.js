@@ -3,11 +3,16 @@ import { randomInt } from 'crypto';
 import User from '../Models/User/User.js';
 import config from '../Utils/config.js';
 import { sendEmail, templateList } from '../Utils/emailService.js';
-import { OTP_TYPES } from '../Utils/constants.js';
+import { OTP_TYPES, statusOptions } from '../Utils/constants.js';
 
-const getOTP = (otpType) => {
+export const getOTP = (otpType) => {
   const value = randomInt(100000, 1000000);
-  return { value, otpType };
+  return {
+    value,
+    otpType,
+    addedAt: Date.now(),
+    expiredAt: Date.now() + 10 * 60 * 1000,
+  };
 };
 
 export const validateOTP = (type) =>
@@ -24,7 +29,10 @@ export const validateOTP = (type) =>
       throw new Error('Provide Email!');
     }
 
-    const existingUser = await User.findOne({ 'email.value': email }).lean();
+    const existingUser = await User.findOne({
+      'email.value': email,
+      status: statusOptions.active,
+    }).lean();
 
     if (!existingUser) {
       res.status(404);
@@ -41,7 +49,7 @@ export const validateOTP = (type) =>
       }
       // marking token used
       await User.findOneAndUpdate(
-        { 'email.value': email },
+        { 'email.value': email, status: statusOptions.active },
         { otp: {}, email: { ...existingUser.email, isVerified: true } },
       );
       return next();
@@ -51,14 +59,15 @@ export const validateOTP = (type) =>
   });
 
 export const requestOTP = asyncHandler(async (req, res, next) => {
-  const { email } = req.body;
-  const { type } = req.query;
-  const newOtp = getOTP(type ?? OTP_TYPES['email-verification'], 10);
+  const { email, type } = req.body;
+  console.log('🚀 ~ requestOTP ~ email:', email);
+  console.log('🚀 ~ requestOTP ~ type:', type);
+  const newOtp = getOTP(type);
 
   if (email && type) {
     if (OTP_TYPES[type]) {
       // check if last sent otp was more than 2 min ago
-      const foundUser = await User.findOne({ email }).lean();
+      const foundUser = await User.findOne({ 'email.value': email });
       const currentTimestamp = Date.now();
       const twoMinutes = parseInt(config.OTP_RESEND_DELAY) * 60 * 1000;
 
@@ -82,7 +91,7 @@ export const requestOTP = asyncHandler(async (req, res, next) => {
         foundUser.otp = newOtp;
         await foundUser.save();
 
-        const isOTPSent = await sendEmail(email, templateList?.otp?.name, {
+        const isOTPSent = await sendEmail(email, templateList?.otp, {
           otp: newOtp.value,
         });
         if (!isOTPSent) {
@@ -95,12 +104,12 @@ export const requestOTP = asyncHandler(async (req, res, next) => {
       }
       throw new Error('No user found with this email!');
     }
-    throw new Error('Invalid type of otp request');
   }
-  if (!type && newOtp) {
-    // Case when user creates account
-    req.body.otp = newOtp;
-    return next();
-  }
-  throw new Error('Failed to generate otp.');
+  // if (!type && newOtp) {
+  //   // Case when user creates account
+  //   req.body.otp = newOtp;
+  //   return next();
+  // }
+
+  throw new Error('Invalid type of otp request');
 });

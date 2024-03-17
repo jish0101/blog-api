@@ -9,4 +9,5 @@ export default {
   SMTP_HOST: process.env.SMTP_HOST,
   SMTP_PORT: process.env.SMTP_PORT,
   OTP_RESEND_DELAY: process.env.OTP_RESEND_DELAY || 2,
+  SALT_WORK: process.env.SALT_WORK,
 };

@@ -46,3 +46,8 @@ export const userEmailValidation = [
   body('email').isString().isEmail().notEmpty(),
   body('otp').isNumeric().notEmpty(),
 ];
+
+export const userOtpReqValidation = [
+  body('email').isString().isEmail().notEmpty(),
+  body('type').isString().notEmpty(),
+];

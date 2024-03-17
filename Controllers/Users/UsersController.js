@@ -7,28 +7,20 @@ import config from '../../Utils/config.js';
 import { sendEmail, templateList } from '../../Utils/emailService.js';
 
 export const createUser = handler(async (req, res) => {
-  const { name, email, password, otp } = req.body;
+  const { name, email, password } = req.body;
 
-  const newPassword = await bcrypt.hash(password, 10);
+  await User.create({
+    name,
+    email: {
+      value: email,
+    },
+    password,
+  });
 
-  await sendEmail(email, templateList.otp, { otp: otp.value });
-
-  if (newPassword) {
-    await User.create({
-      name,
-      email: {
-        value: email,
-      },
-      otp: otp,
-      password: newPassword,
-    });
-
-    return res.json({
-      status: true,
-      message: `User is created!`,
-    });
-  }
-  throw Error('Server error');
+  return res.json({
+    status: true,
+    message: `User is created!`,
+  });
 });
 
 export const updateUser = handler(async (req, res) => {
@@ -106,7 +98,7 @@ export const getAllUsers = handler(async (req, res) => {
 export const loginUser = handler(async (req, res) => {
   const { email, password } = req.body;
 
-  const foundUser = await User.findOne({ email }).lean();
+  const foundUser = await User.findOne({ 'email.value': email }).lean();
 
   if (!foundUser) {
     throw new Error(`User not found with email ${email}`);
@@ -119,7 +111,7 @@ export const loginUser = handler(async (req, res) => {
   const isMatch = await bcrypt.compare(password, foundUser.password);
 
   if (isMatch === true) {
-    const { password, refreshToken, ...payload } = foundUser;
+    const { password, refreshToken, otp, ...payload } = foundUser;
     const newAccessToken = jwt.sign(payload, config.ACCESSTOKENSEC);
     const newRefreshToken = jwt.sign(payload, config.REFRESH_TOKEN_SEC);
 
@@ -140,6 +132,7 @@ export const loginUser = handler(async (req, res) => {
         message: `${updatedUser.name} is logged in`,
         data: {
           ...payload,
+          email,
           token: newAccessToken,
         },
       });

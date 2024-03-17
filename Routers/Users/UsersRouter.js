@@ -10,6 +10,7 @@ import {
 import { schemaValidator } from '../../Middlerwares/schemaValidator.js';
 import {
   userEmailValidation,
+  userOtpReqValidation,
   userValidationGet,
   userValidatonSchema,
   userValidatonSchemaPut,
@@ -23,14 +24,8 @@ const router = express.Router();
 router
   .route('/')
   .get(verifyAuth, userValidationGet, schemaValidator, getAllUsers)
-  .post(userValidatonSchema, schemaValidator, requestOTP, createUser)
-  .put(
-    verifyAuth,
-    userValidatonSchemaPut,
-    schemaValidator,
-    requestOTP,
-    updateUser,
-  )
+  .post(userValidatonSchema, schemaValidator, createUser)
+  .put(verifyAuth, userValidatonSchemaPut, schemaValidator, updateUser)
   .delete(verifyAuth, deleteUser);
 
 // Auth related methods
@@ -44,6 +39,7 @@ router.post(
   },
 );
 
+router.post('/request-otp', userOtpReqValidation, schemaValidator, requestOTP);
 router.post('/login', loginUser);
 router.get('/refresh', getRefreshToken);
 
