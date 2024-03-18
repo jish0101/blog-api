@@ -10,4 +10,7 @@ export default {
   SMTP_PORT: process.env.SMTP_PORT,
   OTP_RESEND_DELAY: process.env.OTP_RESEND_DELAY || 2,
   SALT_WORK: process.env.SALT_WORK,
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+  CLOUDINARY_API_SEC: process.env.CLOUDINARY_API_SEC,
+  CLOUDINARY_NAME: process.env.CLOUDINARY_NAME,
 };

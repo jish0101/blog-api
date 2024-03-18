@@ -1,5 +1,6 @@
 import { body, query } from 'express-validator';
 
+// create user
 export const userValidatonSchema = [
   body('name')
     .isString()
@@ -19,8 +20,10 @@ export const userValidatonSchema = [
     .trim()
     .isLength({ min: 4, max: 30 })
     .withMessage('Password must be at least 4 and atmost 30 characters'),
+  body('profile').exists(),
 ];
 
+// update user
 export const userValidatonSchemaPut = [
   body('name')
     .isString()
@@ -37,16 +40,19 @@ export const userValidatonSchemaPut = [
     .withMessage('Email must be a string'),
 ];
 
+// get users
 export const userValidationGet = [
   query('page').isInt({ min: 1 }).optional(),
   query('rowCount').isInt({ min: 1 }).optional(),
 ];
 
+// verify email
 export const userEmailValidation = [
   body('email').isString().isEmail().notEmpty(),
   body('otp').isNumeric().notEmpty(),
 ];
 
+// request otp
 export const userOtpReqValidation = [
   body('email').isString().isEmail().notEmpty(),
   body('type').isString().notEmpty(),

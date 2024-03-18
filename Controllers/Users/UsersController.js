@@ -4,17 +4,30 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { statusOptions } from '../../Utils/constants.js';
 import config from '../../Utils/config.js';
-import { sendEmail, templateList } from '../../Utils/emailService.js';
+import {
+  cloudinaryUploader,
+  uploadDirectory,
+} from '../../Config/cloudinaryService.js';
+import { fileToURL } from '../../Utils/utility.js';
 
 export const createUser = handler(async (req, res) => {
+  const { profile, getDirectory } = uploadDirectory;
   const { name, email, password } = req.body;
+  const file = req.file;
+  const filePath = fileToURL(file);
+
+  const { secure_url: profileUrl } = await cloudinaryUploader({
+    filePath,
+    directory: getDirectory(email, profile),
+  });
 
   await User.create({
-    name,
+    name: name,
     email: {
       value: email,
     },
-    password,
+    profile: profileUrl,
+    password: password,
   });
 
   return res.json({
@@ -26,8 +39,20 @@ export const createUser = handler(async (req, res) => {
 export const updateUser = handler(async (req, res) => {
   const { _id } = req.user;
   const { name, email } = req.body;
+  const file = req.file;
 
   const newUser = await User.findById(_id);
+
+  if (file) {
+    const filePath = fileToURL(file);
+    const { getDirectory, profile } = uploadDirectory;
+    const { secure_url: profileUrl } = await cloudinaryUploader({
+      filePath,
+      directory: getDirectory(email, profile),
+    });
+
+    newUser.profile = profileUrl;
+  }
 
   if (!newUser) {
     throw new Error('Server Error');
@@ -46,9 +71,9 @@ export const updateUser = handler(async (req, res) => {
 });
 
 export const deleteUser = handler(async (req, res) => {
-  const { id } = req.user;
+  const { _id } = req.user;
 
-  const deletedUser = await User.findById(id);
+  const deletedUser = await User.findById(_id);
 
   if (!deletedUser) {
     throw new Error('Server Error');
@@ -163,7 +188,7 @@ export const getRefreshToken = handler(async (req, res) => {
       res.status(403);
       throw new Error(`Invalid refresh token`);
     }
-    const { password, refreshToken, ...payload } = foundUser;
+    const { password, refreshToken, otp, ...payload } = foundUser;
 
     const token = jwt.sign(payload, config.ACCESSTOKENSEC);
 

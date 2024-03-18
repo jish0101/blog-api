@@ -61,7 +61,7 @@ export const sendEmail = async (to, templateInfo, data) => {
     };
 
     await transport.sendMail(mailOptions);
-    console.log(
+    console.info(
       `Mail sent from: ${config.SMTP_FROM} to: ${to} with template path: ${templateInfo.path}`,
     );
     return true;

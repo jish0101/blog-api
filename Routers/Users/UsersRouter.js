@@ -18,13 +18,20 @@ import {
 import { verifyAuth } from '../../Middlerwares/verifyAuth.js';
 import { requestOTP, validateOTP } from '../../Middlerwares/otpHandler.js';
 import { OTP_TYPES } from '../../Utils/constants.js';
+import { imageUpload, validateImage } from '../../Middlerwares/fileUploader.js';
 
 const router = express.Router();
 
 router
   .route('/')
+  .post(
+    // userValidatonSchema,
+    // schemaValidator,
+    imageUpload.single('profile'),
+    validateImage,
+    createUser,
+  )
   .get(verifyAuth, userValidationGet, schemaValidator, getAllUsers)
-  .post(userValidatonSchema, schemaValidator, createUser)
   .put(verifyAuth, userValidatonSchemaPut, schemaValidator, updateUser)
   .delete(verifyAuth, deleteUser);
 

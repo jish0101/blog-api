@@ -26,11 +26,6 @@ export const errorHandler = async (err, req, res, next) => {
         message: err.message,
       });
     }
-
-    // res.json({
-    //   status: false,
-    //   message: err.message,
-    // });
   } catch (error) {
     console.log(error);
   } finally {

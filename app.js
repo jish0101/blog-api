@@ -12,6 +12,7 @@ import { credentials } from './Middlerwares/credentials.js';
 import { errorHandler, notFoundHandler } from './Middlerwares/errorHandler.js';
 
 import userRouter from './Routers/Users/UsersRouter.js';
+import postRouter from './Routers/Post/PostRouter.js';
 import { verifyAuth } from './Middlerwares/verifyAuth.js';
 
 connectToDatabase();
@@ -25,7 +26,8 @@ app.use(credentials);
 app.use(cors(corsOptions));
 app.use(morgan('common'));
 
-app.use(verifyAuth);
+// app.use(verifyAuth);
+app.use('/post', postRouter);
 app.use('/user', userRouter);
 
 app.get('/', (req, res) => {

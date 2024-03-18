@@ -59,6 +59,10 @@ const userSchema = new mongoose.Schema({
     enum: Object.values(rolesOptions),
     default: rolesOptions.user,
   },
+  profile: {
+    type: String,
+    require: true,
+  },
   refreshToken: {
     type: String,
   },
@@ -68,7 +72,7 @@ userSchema.pre('save', async function (next) {
   if (this.isModified('email')) {
     const existingUser = await User.findOne({
       _id: { $ne: this._id },
-      'email.value': this.email,
+      'email.value': this.email.value,
       status: { $nin: [statusOptions.inactive, statusOptions.deleted] },
     });
     if (existingUser) {
