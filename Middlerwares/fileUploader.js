@@ -1,6 +1,6 @@
-import handler from 'express-async-handler';
 import multer from 'multer';
-import path from 'path';
+import sharp from 'sharp';
+import handler from 'express-async-handler';
 
 const storage = multer.memoryStorage();
 export const imageUpload = multer({ storage });
@@ -18,3 +18,17 @@ export const validateImage = handler(async (req, res, next) => {
 
   next();
 });
+
+export const transFormImage = async (file) => {
+  try {
+    return sharp(file.buffer)
+      .resize(350, 350, {
+        fit: sharp.fit.contain,
+      })
+      .toFormat('jpeg')
+      .toBuffer();
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
+};

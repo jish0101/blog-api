@@ -1,2 +1,8 @@
-export const fileToURL = (file) =>
-  `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+export const fileToURL = (buffer) => {
+  try {
+    const bufferString = Buffer.from(buffer).toString('base64');
+    return `data:image/jpeg;base64,${bufferString}`;
+  } catch (error) {
+    return error;
+  }
+};

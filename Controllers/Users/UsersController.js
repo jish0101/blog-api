@@ -9,24 +9,19 @@ import {
   uploadDirectory,
 } from '../../Config/cloudinaryService.js';
 import { fileToURL } from '../../Utils/utility.js';
+import { transFormImage } from '../../Middlerwares/fileUploader.js';
 
 export const createUser = handler(async (req, res) => {
-  const { profile, getDirectory } = uploadDirectory;
   const { name, email, password } = req.body;
-  const file = req.file;
-  const filePath = fileToURL(file);
-
-  const { secure_url: profileUrl } = await cloudinaryUploader({
-    filePath,
-    directory: getDirectory(email, profile),
-  });
+  const imageBuffer = await transFormImage(req.file);
+  const filePath = fileToURL(imageBuffer);
 
   await User.create({
     name: name,
     email: {
       value: email,
     },
-    profile: profileUrl,
+    profile: filePath,
     password: password,
   });
 
@@ -41,32 +36,26 @@ export const updateUser = handler(async (req, res) => {
   const { name, email } = req.body;
   const file = req.file;
 
-  const newUser = await User.findById(_id);
+  const user = await User.findById(_id);
 
-  if (file) {
-    const filePath = fileToURL(file);
-    const { getDirectory, profile } = uploadDirectory;
-    const { secure_url: profileUrl } = await cloudinaryUploader({
-      filePath,
-      directory: getDirectory(email, profile),
-    });
-
-    newUser.profile = profileUrl;
-  }
-
-  if (!newUser) {
+  if (!user) {
     throw new Error('Server Error');
   }
 
-  newUser.name = name;
-  newUser.email = email;
+  if (file) {
+    const imageBuffer = await transFormImage(req.file);
+    const filePath = fileToURL(imageBuffer);
+    user.profile = filePath;
+  }
 
-  await newUser.save();
+  user.name = name;
+  user.email = email;
+
+  await user.save();
 
   res.json({
     status: true,
-    message: `User is updated ${newUser.name}`,
-    data: newUser,
+    message: `User is updated ${user.name}`,
   });
 });
 

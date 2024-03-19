@@ -23,7 +23,6 @@ export const cloudinaryUploader = async ({ filePath, directory }) => {
         folder: directory,
         use_filename: true,
       });
-      console.log('🚀 ~ cloudinaryUploader ~ fileObj:', fileObj);
       return fileObj;
     }
     throw new Error(`Server error`);

@@ -8,6 +8,10 @@ import config from '../../Utils/config.js';
 import { getOTP } from '../../Middlerwares/otpHandler.js';
 import bcrypt from 'bcrypt';
 import { sendEmail, templateList } from '../../Utils/emailService.js';
+import {
+  cloudinaryUploader,
+  uploadDirectory,
+} from '../../Config/cloudinaryService.js';
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -61,7 +65,6 @@ const userSchema = new mongoose.Schema({
   },
   profile: {
     type: String,
-    require: true,
   },
   refreshToken: {
     type: String,
@@ -69,28 +72,45 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.pre('save', async function (next) {
-  if (this.isModified('email')) {
+  try {
     const existingUser = await User.findOne({
       _id: { $ne: this._id },
       'email.value': this.email.value,
       status: { $nin: [statusOptions.inactive, statusOptions.deleted] },
     });
-    if (existingUser) {
-      next(new Error('User already exists :('));
+
+    if (this.isModified('email')) {
+      if (existingUser) {
+        next(new Error('User already exists :('));
+      } else {
+        // We need to send otp when user email is changed.
+        const otp = getOTP(OTP_TYPES['email-verification']);
+        this.otp = otp;
+        await sendEmail(this.email.value, templateList.otp, { otp: otp.value });
+      }
     }
-    // We need to send otp when user email is changed.
-    const otp = getOTP(OTP_TYPES['email-verification']);
-    this.otp = otp;
-    await sendEmail(this.email.value, templateList.otp, { otp: otp.value });
-  }
 
-  if (this.isModified('password')) {
-    const salt = await bcrypt.genSalt(parseInt(config.SALT_WORK, 10));
-    const hash = bcrypt.hashSync(this.password, salt);
-    this.password = hash;
-  }
+    // update profile if account is created or profile is updated.
+    if (this.isModified('profile')) {
+      const { getDirectory, profile } = uploadDirectory;
+      const { secure_url: profileUrl } = await cloudinaryUploader({
+        filePath: this.profile,
+        directory: getDirectory(this.email.value, profile),
+      });
+      this.profile = profileUrl;
+    }
 
-  next();
+    if (this.isModified('password')) {
+      const salt = await bcrypt.genSalt(parseInt(config.SALT_WORK, 10));
+      const hash = bcrypt.hashSync(this.password, salt);
+      this.password = hash;
+    }
+
+    next();
+  } catch (error) {
+    console.log('pre-save-error: ', error);
+    next(error);
+  }
 });
 
 const User = mongoose.model('User', userSchema);
