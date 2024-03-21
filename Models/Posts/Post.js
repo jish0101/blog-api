@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { statusOptions } from '../../Utils/constants';
+import { statusOptions } from '../../Utils/constants.js';
 
 const PostSchema = new mongoose.Schema(
   {

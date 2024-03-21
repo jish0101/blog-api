@@ -26,7 +26,7 @@ app.use(credentials);
 app.use(cors(corsOptions));
 app.use(morgan('common'));
 
-// app.use(verifyAuth);
+app.use(verifyAuth);
 app.use('/post', postRouter);
 app.use('/user', userRouter);
 

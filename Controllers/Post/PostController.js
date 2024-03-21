@@ -1,4 +1,5 @@
 import handler from 'express-async-handler';
+// import Post from '../../Models/Posts/Post.js';
 
 export const createPost = handler(async (req, res) => {
   res.json({
